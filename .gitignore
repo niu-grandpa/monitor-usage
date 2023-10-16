@@ -1,6 +1,6 @@
-# Unit test / coverage reports
-test/coverage
+src/__test__/coverage
 
 node_modules
 
 dist
+

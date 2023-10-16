@@ -1,13 +1,27 @@
 {
   "name": "monitor-usage",
   "version": "1.0.0",
-  "description": "",
+  "description": "a code monitoring tool based on Javascript, used to monitor and track target code usage in real time, collect code running log reports, etc.",
   "main": "monitor-usage.js",
   "scripts": {
     "build": "webpack --progress",
     "test": "jest"
   },
-  "keywords": [],
+  "keywords": [
+    "js",
+    "ts",
+    "monitor",
+    "library",
+    "js-library",
+    "javascript",
+    "code monitoring",
+    "debugger",
+    "code debugger",
+    "code tracking",
+    "monitor-usage",
+    "MonitorUsage",
+    "javscript code monitor"
+  ],
   "author": "AYIN",
   "license": "MIT",
   "dependencies": {
