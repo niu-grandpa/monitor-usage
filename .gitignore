@@ -1,0 +1,6 @@
+# Unit test / coverage reports
+test/coverage
+
+node_modules
+
+dist
