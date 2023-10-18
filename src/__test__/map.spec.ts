@@ -8,7 +8,15 @@ describe('测试目标为Map类型', () => {
   });
 
   test('set map', () => {
-    // 解决办法： core.ts 246 行
+    // map.xxx is not a function 解决办法： core.ts 246 行
     map.set('a', 1);
+  });
+
+  test('get map', () => {
+    map.get('a');
+  });
+
+  test('get map', () => {
+    map.has('a');
   });
 });

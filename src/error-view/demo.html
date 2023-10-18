@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+</head>
+<style>
+  .__err_view_mask__ {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+
+    & .__err_view__ {
+      width: 680px;
+      height: 420px;
+      max-height: 420px;
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 6px 24px;
+      border-radius: 6px;
+      overflow: auto;
+      color: #ff4d4f;
+      background-color: #e6e7eb;
+
+      & .__err_view_close__ {
+        position: absolute;
+        right: 20px;
+        top: 10px;
+        cursor: pointer;
+      }
+
+      & .__err_view_h2__ {
+        font-size: 1.5em;
+      }
+
+      & .__err_view_h3__ {
+        font-size: 1.171em;
+      }
+    }
+  }
+</style>
+
+<body>
+  <section class="__err_view_mask__">
+    <div class="__err_view__">
+      <span class="__err_view_close__">❎</span>
+      <h2 class="__err_view_h2__">[MonitorUsage]</h2>
+      <h2 class="__err_view_h2__">ReferenceError: b is not defined</h2>
+      <h3 class="__err_view_h3__">Error stack:</h3>
+      <div id="a">
+        <div>at Object.anonymous (d:\project\ideas\monitor-usage\src\a.js:1:13)</div>
+        <div>at Module._compile (node:internal/modules/cjs/loader:1126:14)</div>
+        <div>at Object.Module._extensions..js (node:internal/modules/cjs/loader:1180:10)</div>
+        <div>at Module.load (node:internal/modules/cjs/loader:1004:32)</div>
+        <div>at Function.Module._load (node:internal/modules/cjs/loader:839:12)</div>
+        <div>at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:81:12)</div>
+        <div>at node:internal/main/run_main_module:17:47</div>
+      </div>
+    </div>
+    </div>
+</body>
+
+</html>

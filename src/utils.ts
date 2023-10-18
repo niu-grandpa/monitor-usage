@@ -17,71 +17,6 @@ export function typeOf(value: any): string {
     .slice(7);
 }
 
-export function deepClone(target: object) {
-  const map = new WeakMap();
-
-  function isObject(target: object) {
-    return (
-      (typeof target === 'object' && target) || typeof target === 'function'
-    );
-  }
-
-  function clone(data) {
-    if (!isObject(data)) {
-      return data;
-    }
-    if ([Date, RegExp].includes(data.constructor)) {
-      return new data.constructor(data);
-    }
-    if (typeof data === 'function') {
-      return new Function('return ' + data.toString())();
-    }
-    const exist = map.get(data);
-    if (exist) {
-      return exist;
-    }
-    if (data instanceof Map) {
-      const result = new Map();
-      map.set(data, result);
-      data.forEach((val, key) => {
-        if (isObject(val)) {
-          result.set(key, clone(val));
-        } else {
-          result.set(key, val);
-        }
-      });
-      return result;
-    }
-    if (data instanceof Set) {
-      const result = new Set();
-      map.set(data, result);
-      data.forEach(val => {
-        if (isObject(val)) {
-          result.add(clone(val));
-        } else {
-          result.add(val);
-        }
-      });
-      return result;
-    }
-    const keys = Reflect.ownKeys(data);
-    const allDesc = Object.getOwnPropertyDescriptors(data);
-    const result = Object.create(Object.getPrototypeOf(data), allDesc);
-    map.set(data, result);
-    keys.forEach(key => {
-      const val = data[key];
-      if (isObject(val)) {
-        result[key] = clone(val);
-      } else {
-        result[key] = val;
-      }
-    });
-    return result;
-  }
-
-  return clone(target);
-}
-
 export function isInNodeEnv() {
   return (
     (typeof window === 'undefined' || typeof document === 'undefined') &&
@@ -91,4 +26,33 @@ export function isInNodeEnv() {
 
 export function getDateString() {
   return new Date().toLocaleString();
+}
+
+// 对象序列化，解决undefined、函数、Map丢失问题
+export function JSONStringify(option: any) {
+  return JSON.stringify(option, (key, val) => {
+    if (typeof val === 'function') {
+      return `${val}`;
+    }
+    if (typeof val === 'undefined') {
+      return 'undefined';
+    }
+    if (val != val) {
+      return 'NaN';
+    }
+    if (val instanceof Map) {
+      return {
+        dataType: 'Map',
+        val: Array.from(val.entries()),
+      };
+    }
+    if (val instanceof Set) {
+      return {
+        dataType: 'Set',
+        val: Array.from(val.entries()),
+      };
+    }
+
+    return val;
+  });
 }

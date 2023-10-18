@@ -1,5 +1,6 @@
+import showErrorView from './error-view';
 import {
-  deepClone,
+  JSONStringify,
   getDateString,
   isInNodeEnv,
   isPrimitiveType,
@@ -8,11 +9,25 @@ import {
 
 type ReportingFunc = (repo: ReportInfo[]) => void;
 
+type GclResult = {
+  filepath: string;
+  position: string;
+};
+
+type UsageType =
+  | 'Unkown'
+  | 'Get'
+  | 'Modify'
+  | 'Has'
+  | 'Delete'
+  | 'Method Call'
+  | 'Function Call';
+
 interface ReportInfo {
   newValue: any;
   oldValue: any;
   source: any;
-  log: string;
+  info: string;
   position: string;
   filepath?: string;
   usageTime: string;
@@ -21,38 +36,30 @@ interface ReportInfo {
   usageCount: number;
   isNewlyAdded: boolean;
   status: 'OK' | 'Fail';
-  name: string | symbol;
-  usageType:
-    | 'Unkown'
-    | 'Get'
-    | 'Modify'
-    | 'Has'
-    | 'Delete'
-    | 'Method Call'
-    | 'Function Call';
+  usageType: UsageType;
+  dailyUsageRate: string;
+  useageName: string | symbol;
 }
+
 interface MonitorUsageOptions {
   /**如果没有设置key，调用export方法导出的报告文件不会包含当前记录 */
   key?: string;
+  /**当捕获错误时，页面是否展示错误提示框 */
+  showErrorView?: boolean;
   /**是否可以修改属性值 */
   isModifyValue: boolean;
   /**是否允许添加属性 */
   allowAdditionalProps: boolean;
 }
 
-type GclResult = {
-  filepath: string;
-  position: string;
-};
-
-const jsnk = (key: any) => JSON.stringify(key);
+const specialTypes = ['Map', 'Set', 'WeakMap'];
 
 const defaultMonitorUsageOptions: MonitorUsageOptions = {
+  key: undefined,
   isModifyValue: true,
+  showErrorView: false,
   allowAdditionalProps: true,
 };
-
-const specialTypes = ['Map', 'Set', 'WeakMap'];
 
 export default class MonitorUsageClass {
   static proxyMemo = new WeakMap();
@@ -84,18 +91,19 @@ export default class MonitorUsageClass {
 
   private getReportObj(source: any): ReportInfo {
     return {
-      source,
-      name: '',
       status: 'OK',
+      source,
+      useageName: '',
       usageCount: 0,
       usageType: 'Unkown',
       usageTime: getDateString(),
+      dailyUsageRate: '0%',
+      info: 'no problem',
       oldValue: undefined,
       newValue: undefined,
       isNewlyAdded: false,
       whenToAdd: undefined,
       lastModify: undefined,
-      log: 'no problem',
       position: '',
       filepath: '',
     };
@@ -181,7 +189,7 @@ export default class MonitorUsageClass {
     const createRepoFactory = () =>
       this.getReportObj(
         source != null && typeof source === 'object'
-          ? jsnk(deepClone(source))
+          ? JSONStringify(source)
           : source.toString()
       );
 
@@ -190,8 +198,19 @@ export default class MonitorUsageClass {
       repo: ReportInfo
     ) => {
       const newCount = (MonitorUsageClass.keyUsesMap[key] ?? 0) + 1;
+
       repo.usageCount = newCount;
       repo.usageTime = getDateString();
+
+      // 计算使用目标的当天平均使用率
+      const rate = newCount / 24;
+      repo.dailyUsageRate =
+        rate > 100
+          ? '100%'
+          : rate > 0 && rate < 1
+          ? '1%'
+          : rate.toPrecision(3) + '%';
+
       MonitorUsageClass.keyUsesMap[key] = newCount;
     };
 
@@ -212,13 +231,13 @@ export default class MonitorUsageClass {
         const repo = createRepoFactory();
         const res = Reflect.has(target, key);
 
-        repo.name = accessedName(key);
+        repo.useageName = accessedName(key);
         repo.usageType = 'Has';
-        repo.log = 'this property exists in source';
+        repo.info = 'this property exists in source';
 
         if (!res) {
           repo.status = 'Fail';
-          repo.log = 'this property does not exist in the target';
+          repo.info = 'this property does not exist in the target';
         }
 
         changeUsageCountAndTime(key, repo);
@@ -237,12 +256,11 @@ export default class MonitorUsageClass {
         }
 
         repo.usageType = 'Get';
-        repo.name = accessedName(key);
+        repo.useageName = accessedName(key);
 
         changeUsageCountAndTime(key, repo);
 
         const targetType = typeOf(target);
-
         // 对于特殊类型：Map、Set、WeakMap，调用其方法时，实际上相当于get操作，直接返回即可
         if (specialTypes.includes(typeOf(target))) {
           repo.usageType =
@@ -258,11 +276,13 @@ export default class MonitorUsageClass {
         if (typeOf(value) === 'Function') {
           repo.usageType = 'Method Call';
           try {
-            repo.log = 'object method is called';
+            repo.info = 'object method is called';
             (value as Function).apply(target);
           } catch (error) {
+            if (options.showErrorView) showErrorView(error);
+
             repo.status = 'Fail';
-            repo.log = 'an error occurred while calling the method';
+            repo.info = 'an error occurred while calling the method';
 
             console.error(
               '[MonitorUsage error]: an error occurred while calling the method',
@@ -279,7 +299,7 @@ export default class MonitorUsageClass {
         } else if (!Reflect.has(target, key)) {
           if (!options.allowAdditionalProps) {
             repo.status = 'Fail';
-            repo.log = 'this property does not exist in the source';
+            repo.info = 'this property does not exist in the source';
 
             triggerTrap(target, repo, new Error());
 
@@ -288,7 +308,7 @@ export default class MonitorUsageClass {
             );
           } else {
             repo.isNewlyAdded = true;
-            repo.log = 'this is a newly added property';
+            repo.info = 'this is a newly added property';
 
             Reflect.set(target, key, undefined);
 
@@ -304,7 +324,7 @@ export default class MonitorUsageClass {
             );
           }
         } else {
-          repo.log = 'property accessed';
+          repo.info = 'property accessed';
           triggerTrap(target, repo, new Error());
         }
 
@@ -317,13 +337,13 @@ export default class MonitorUsageClass {
 
         repo.usageType = 'Modify';
         repo.oldValue = oldValue;
-        repo.name = accessedName(key);
+        repo.useageName = accessedName(key);
 
         changeUsageCountAndTime(key, repo);
 
         if (!options.isModifyValue) {
           repo.status = 'Fail';
-          repo.log = 'this value is not allowed to be modified';
+          repo.info = 'this value is not allowed to be modified';
 
           triggerTrap(target, repo, new Error());
 
@@ -336,7 +356,7 @@ export default class MonitorUsageClass {
 
         if (!Reflect.has(target, key)) {
           repo.isNewlyAdded = true;
-          repo.log = 'a newly set property';
+          repo.info = 'a newly set property';
           repo.oldValue = newValue.toString();
 
           triggerTrap(target, repo, new Error());
@@ -354,12 +374,12 @@ export default class MonitorUsageClass {
         }
 
         if (Object.is(oldValue, newValue)) {
-          repo.log = 'ignore updating old and new equal values';
+          repo.info = 'ignore updating old and new equal values';
           triggerTrap(target, repo, new Error());
           return false;
         }
 
-        repo.log = 'update value';
+        repo.info = 'update value';
         repo.newValue = newValue.toString();
         repo.lastModify = getDateString();
 
@@ -372,13 +392,13 @@ export default class MonitorUsageClass {
         const repo = createRepoFactory();
         const res = Reflect.deleteProperty(target, key);
 
-        repo.name = accessedName(key);
+        repo.useageName = accessedName(key);
         repo.usageType = 'Delete';
-        repo.log = 'the property has been deleted';
+        repo.info = 'the property has been deleted';
 
         if (!res) {
           repo.status = 'Fail';
-          repo.log = 'the property cannot be deleted';
+          repo.info = 'the property cannot be deleted';
         }
 
         triggerTrap(target, repo, new Error());
@@ -392,7 +412,7 @@ export default class MonitorUsageClass {
           (target as Function)?.name ||
           `anonymous_fid_${++MonitorUsageClass.anonymousFid}`;
 
-        repo.name = funcName;
+        repo.useageName = funcName;
         repo.usageType = 'Function Call';
 
         changeUsageCountAndTime(funcName, repo);
@@ -400,21 +420,23 @@ export default class MonitorUsageClass {
         try {
           const result = Reflect.apply(target as Function, thisArg, argArray);
 
-          repo.log = `is called with arguments: ${jsnk(
+          repo.info = `is called with arguments: ${JSONStringify(
             argArray
-          )}, and the result of the call is ${jsnk(result)}`;
+          )}, and the result of the call is ${JSONStringify(result)}`;
 
           return result;
         } catch (error) {
+          if (options.showErrorView) showErrorView(error);
+
           repo.status = 'Fail';
-          repo.log = 'function call error';
+          repo.info = 'function call error';
 
           console.error(
             '[MonitorUsage error]: function call error',
-            '\n name: ',
+            '\n useageName: ',
             funcName,
             '\n function: ',
-            target.toString(),
+            JSONStringify(target),
             '\n',
             error
           );
@@ -431,18 +453,22 @@ export default class MonitorUsageClass {
         changeUsageCountAndTime(constructorName, repo);
 
         try {
-          repo.log = `constructor called with arguments: ${jsnk(argArray)}`;
+          repo.info = `constructor called with arguments: ${JSONStringify(
+            argArray
+          )}`;
           return Reflect.construct(target as any, argArray, newTarget);
         } catch (error) {
+          if (options.showErrorView) showErrorView(error);
+
           repo.status = 'Fail';
-          repo.log = 'an error occurred construct function';
+          repo.info = 'an error occurred construct function';
 
           console.error(
             '[MonitorUsage error]: an error occurred construct function',
-            '\n name: ',
+            '\n useageName: ',
             constructorName,
             '\n function: ',
-            newTarget.toString(),
+            JSONStringify(newTarget),
             '\n',
             error
           );
@@ -453,8 +479,8 @@ export default class MonitorUsageClass {
 
       ownKeys(target) {
         const repo = createRepoFactory();
-        repo.name = '@@the key of the entire source';
-        repo.log = 'target is traversed';
+        repo.useageName = '@@the key of the entire source';
+        repo.info = 'target is traversed';
         repo.usageTime = getDateString();
         triggerTrap(target, repo, new Error());
         return Reflect.ownKeys(target);
@@ -486,17 +512,17 @@ export default class MonitorUsageClass {
 
   /**
    * 导出JSON格式的日志文件
-   * @param name 文件名
+   * @param useageName 文件名
    * @param _path 存放路径
    */
-  public export(name = 'reports', _path?: string): Promise<string> {
+  public export(useageName = 'reports', _path?: string): Promise<string> {
     const reports = JSON.stringify(MonitorUsageClass.recordsToExport);
 
     if (isInNodeEnv() && process.env.NODE_ENV !== 'production') {
       const fs = require('fs');
       const path = require('path');
       const jsonString = JSON.stringify(reports);
-      const filePath = path.join(_path ?? __dirname, `${name}.json`);
+      const filePath = path.join(_path ?? __dirname, `${useageName}.json`);
 
       return new Promise((res, rej) => {
         fs.writeFile(filePath, jsonString, 'utf8', (err: any) => {
@@ -521,7 +547,7 @@ export default class MonitorUsageClass {
         const link = document.createElement('a');
 
         link.href = url;
-        link.download = `${name}.json`;
+        link.download = `${useageName}.json`;
         link.click();
 
         res(url);
