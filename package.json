@@ -1,10 +1,29 @@
 {
   "name": "monitor-usage",
+  "title": "Monitor Usage",
   "version": "1.0.0",
   "description": "a code monitoring tool based on Javascript, used to monitor and track target code usage in real time, collect code running log reports, etc.",
-  "main": "monitor-usage.js",
+  "homepage": "https://github.com/niu-grandpa/monitor-usage",
+  "bugs": {
+    "url": "https://github.com/niu-grandpa/monitor-usage/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/niu-grandpa/monitor-usage"
+  },
+  "contributors": [
+    "ayin"
+  ],
+  "files": [
+    "dist",
+    "es"
+  ],
+  "main": "es/index.js",
+  "module": "es/index.js",
+  "unpkg": "dist/monitor-usage.js",
+  "typings": "es/types/index.d.ts",
   "scripts": {
-    "build": "webpack --progress",
+    "build": "tsc && webpack --progress",
     "test": "jest"
   },
   "keywords": [
