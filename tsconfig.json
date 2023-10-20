@@ -2,6 +2,9 @@
   "compilerOptions": {
     "target": "esnext",
     "useDefineForClassFields": true,
+    "declaration": true,
+    "declarationDir": "es/types",
+    "outDir": "es",
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -14,6 +17,6 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "src/__test__"],
   "suppressImplicitAnyIndexErrors": true
 }
