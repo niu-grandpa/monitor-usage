@@ -2,5 +2,7 @@ src/__test__/coverage
 
 node_modules
 
+es
+
 dist
 
