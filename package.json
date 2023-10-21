@@ -1,7 +1,7 @@
 {
   "name": "monitor-usage",
   "title": "Monitor Usage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a code monitoring tool based on Javascript, used to monitor and track target code usage in real time, collect code running log reports, etc.",
   "homepage": "https://github.com/niu-grandpa/monitor-usage",
   "bugs": {
