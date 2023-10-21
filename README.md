@@ -26,7 +26,7 @@ yarn add monitor-usage
 在浏览器中使用 script 标签直接引入文件，并使用全局对象 MonitorUsage。
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/monitor-usage/dist/monitor-usage.js"></script>
+<script src="https://unpkg.com/browse/monitor-usage@1.0.1/dist/monitor-usage.js"></script>
 ```
 
 ## 示例
