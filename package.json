@@ -19,7 +19,6 @@
     "es"
   ],
   "main": "es/index.js",
-  "module": "es/index.js",
   "unpkg": "dist/monitor-usage.js",
   "typings": "es/types/index.d.ts",
   "scripts": {
