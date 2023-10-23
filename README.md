@@ -6,6 +6,7 @@
 
 - 实时监控目标代码，自动响应报告信息。
 - 追踪目标代码所在源文件位置。
+- 统计目标代码平均使用率、访问时间等。
 - 汇合所有报告信息，导出为日志文件。
 - 记录目标被操作类型、使用频率、次数以及操作的时间等，详见下方API。
 
@@ -88,7 +89,7 @@ fn();
 | stares | 对目标进行监控               | (target: object, callback: (repo:  `ReportInfo[]`) => void, options?:`Options`) => void |
 | export | 导出所有监控日志为`json`文件 | (name?: string, path?: string) => promise<string>            |
 
-### Options 
+### Options
 
 选项字段说明
 
@@ -120,4 +121,3 @@ fn();
 | lastModify     | 最后修改时间，属性值被修改时更新 | string  | -          |
 | position       | 监控目标所在源文件内的行列数     | string  | -          |
 | filepath       | 监控目标的文件路径               | string  | -          |
-
