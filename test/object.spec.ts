@@ -1,4 +1,4 @@
-import MonitorUsage from '..';
+import MonitorUsage from '../src';
 
 const monitor = MonitorUsage();
 
