@@ -24,7 +24,7 @@ const config = {
   // collectCoverageFrom: undefined,
 
   // The directory where Jest should output its coverage files
-  coverageDirectory: 'src/__test__/coverage',
+  coverageDirectory: '__test__/coverage',
 
   transform: {
     '^.+\\.jsx?$': 'babel-jest', //这个是jest的默认配置
